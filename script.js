@@ -482,20 +482,46 @@ function createCurvedArrow(from, to, existingCurves = [], alternateDirection = n
         zIndexOffset: -500 // Below city markers
     }).addTo(map);
     
+    // Ensure taper marker definition exists in SVG (only once)
+    if (!map._taperMarkerAdded) {
+        const mapContainer = map.getContainer();
+        const svg = mapContainer.querySelector('svg');
+        if (svg) {
+            let defs = svg.querySelector('defs');
+            if (!defs) {
+                defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                svg.insertBefore(defs, svg.firstChild);
+            }
+            // Check if marker already exists
+            if (!defs.querySelector('#taper-marker')) {
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'taper-marker');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '10');
+                marker.setAttribute('refX', '10');
+                marker.setAttribute('refY', '5');
+                marker.setAttribute('orient', 'auto');
+                marker.setAttribute('markerUnits', 'strokeWidth');
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', 'M 0,0 L 10,5 L 0,10 Z');
+                path.setAttribute('fill', '#667eea');
+                path.setAttribute('opacity', '0.9');
+                marker.appendChild(path);
+                defs.appendChild(marker);
+            }
+            map._taperMarkerAdded = true;
+        }
+    }
+    
+    // Add marker-end to the polyline's SVG path element after it's rendered
+    setTimeout(() => {
+        const path = polyline._path;
+        if (path) {
+            path.setAttribute('marker-end', 'url(#taper-marker)');
+        }
+    }, 0);
+    
     const arrowMarkers = [];
-    
-    // Find the point where the curve touches the destination city dot
-    // City dot radius is 15 pixels, need to find intersection point
-    const cityDotRadius = 15; // pixels
-    const destLat = to.lat;
-    const destLon = to.lon;
-    
-    // Convert destination city to screen coordinates
-    const destScreenPoint = map.latLngToContainerPoint([destLat, destLon]);
-    const destScreenX = destScreenPoint.x;
-    const destScreenY = destScreenPoint.y;
-    
-    // Arrowheads removed - no longer drawing them
     
     return { polyline, arrowMarkers, points: pathPoints, direction: selectedDirection };
 }
