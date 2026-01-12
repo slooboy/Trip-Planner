@@ -452,85 +452,50 @@ function createCurvedArrow(from, to, existingCurves = [], alternateDirection = n
     const destScreenX = destScreenPoint.x;
     const destScreenY = destScreenPoint.y;
     
-    // Find the point on the curve closest to the city center (working backwards from end)
-    // Then calculate where it intersects the city dot circle
-    let closestPoint = null;
-    let closestDistance = Infinity;
-    let closestIndex = -1;
-    let closestScreen = null;
+    // Place arrowhead halfway along the curve
+    const midpointIndex = Math.floor(pathPoints.length / 2);
+    const midpointPoint = pathPoints[midpointIndex];
     
-    // Work backwards from the end of the curve to find the closest point
-    for (let i = pathPoints.length - 1; i >= 0; i--) {
-        const point = pathPoints[i];
-        const pointScreen = map.latLngToContainerPoint([point[0], point[1]]);
-        const dx = pointScreen.x - destScreenX;
-        const dy = pointScreen.y - destScreenY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestIndex = i;
-            closestPoint = point;
-            closestScreen = pointScreen;
-        }
-        
-        // Stop searching once we're far from the city (curve is moving away)
-        if (distance > cityDotRadius * 4 && closestIndex >= 0) {
-            break;
-        }
-    }
-    
-    // Calculate intersection point on the city dot circle and arrow angle
+    // Calculate arrow position and angle
     let arrowLat, arrowLon, arrowAngle;
     
-    if (closestPoint && closestIndex >= 0 && closestScreen) {
-        const dx = closestScreen.x - destScreenX;
-        const dy = closestScreen.y - destScreenY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance > 0) {
-            // Normalize direction vector from city center to curve point
-            const dirX = dx / distance;
-            const dirY = dy / distance;
-            
-            // Calculate point outside the city dot where arrowhead should be placed
-            // City dot radius is 15px, arrowhead is 20x20 (10px radius)
-            // Place arrowhead at cityDotRadius + arrowheadRadius + small gap
-            const arrowheadRadius = 10; // Half of 20px arrowhead size
-            const gap = 3; // Small gap between dot and arrowhead
-            const arrowheadDistance = cityDotRadius + arrowheadRadius + gap; // Total: 15 + 10 + 3 = 28px from center
-            
-            // Calculate point outside the city dot circle
-            const arrowheadX = destScreenX + dirX * arrowheadDistance;
-            const arrowheadY = destScreenY + dirY * arrowheadDistance;
-            
-            // Convert back to lat/lon
-            const arrowheadLatLng = map.containerPointToLatLng([arrowheadX, arrowheadY]);
-            arrowLat = arrowheadLatLng.lat;
-            arrowLon = arrowheadLatLng.lng;
-            
-            // Calculate angle - arrow should point from arrowhead toward city center
-            // The direction vector points from city to curve, so reverse it for arrow direction
-            arrowAngle = Math.atan2(-dirY, -dirX) * 180 / Math.PI;
-        } else {
-            // Fallback: use end point
-            const endPoint = pathPoints[pathPoints.length - 1];
-            arrowLat = endPoint[0];
-            arrowLon = endPoint[1];
-            const prevPoint = pathPoints[Math.max(0, pathPoints.length - 3)];
-            const destDx = arrowLon - prevPoint[1];
-            const destDy = arrowLat - prevPoint[0];
-            arrowAngle = Math.atan2(destDy, destDx) * 180 / Math.PI;
-        }
-    } else {
-        // Fallback: use end point
-        const endPoint = pathPoints[pathPoints.length - 1];
-        arrowLat = endPoint[0];
-        arrowLon = endPoint[1];
-        const prevPoint = pathPoints[Math.max(0, pathPoints.length - 3)];
-        const destDx = arrowLon - prevPoint[1];
-        const destDy = arrowLat - prevPoint[0];
-        arrowAngle = Math.atan2(destDy, destDx) * 180 / Math.PI;
+    arrowLat = midpointPoint[0];
+    arrowLon = midpointPoint[1];
+    
+    // Calculate angle - arrow should point along the curve toward the destination
+    // The curve goes from 'from' (origin) to 'to' (destination)
+    // Get points before and after midpoint to calculate the curve direction
+    const prevIndex = Math.max(0, midpointIndex - 1);
+    const nextIndex = Math.min(pathPoints.length - 1, midpointIndex + 1);
+    const prevPoint = pathPoints[prevIndex];
+    const nextPoint = pathPoints[nextIndex];
+    
+    // Convert to screen coordinates for accurate angle calculation
+    const prevScreen = map.latLngToContainerPoint([prevPoint[0], prevPoint[1]]);
+    const nextScreen = map.latLngToContainerPoint([nextPoint[0], nextPoint[1]]);
+    
+    // Calculate direction along the curve (from previous to next point)
+    // This should be from origin toward destination
+    const dx = nextScreen.x - prevScreen.x;
+    const dy = nextScreen.y - prevScreen.y;
+    
+    // Verify direction: if nextIndex > prevIndex, we're going forward (correct)
+    // If the direction seems reversed, we can also check by comparing to destination
+    // For now, use the direction from prev to next (should be forward)
+    arrowAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+    
+    // Double-check: if the angle seems wrong, verify by checking direction to destination
+    const midpointScreen = map.latLngToContainerPoint([arrowLat, arrowLon]);
+    const toDestDx = destScreenX - midpointScreen.x;
+    const toDestDy = destScreenY - midpointScreen.y;
+    const toDestAngle = Math.atan2(toDestDy, toDestDx) * 180 / Math.PI;
+    
+    // Use the direction along the curve, but ensure it's pointing toward destination
+    // If the angle difference is > 90 degrees, we might be going backward
+    const angleDiff = Math.abs(arrowAngle - toDestAngle);
+    if (angleDiff > 90 && angleDiff < 270) {
+        // Reverse the direction (add 180 degrees)
+        arrowAngle = (arrowAngle + 180) % 360;
     }
     
     // Add arrowhead at the intersection point where curve touches city dot
@@ -1019,10 +984,13 @@ function getCitySequence(city) {
 }
 
 // Convert number to Unicode circled digit (1-based for display: 1→①, 2→②, etc.)
-// Note: 0 should display as "START", not a circled number
+// Note: 0 should display as home icon, not "START"
 function getCircledNumber(num) {
     if (num === 0) {
-        return 'START'; // First city shows "START"
+        // First city shows home icon (same as in city dots)
+        return `<svg width="14" height="14" viewBox="0 0 14 14" style="display: inline-block; vertical-align: middle; opacity: 1;">
+            <path d="M7 1 L1 6 L1 13 L5 13 L5 9 L9 9 L9 13 L13 13 L13 6 Z" fill="currentColor" stroke="none" opacity="1"/>
+        </svg>`;
     }
     if (num < 1 || num > 20) {
         // For numbers > 20, use regular number with parentheses or fallback
@@ -1349,8 +1317,35 @@ function addCityToList(city) {
 function removeCity(cityName) {
     const index = cities.findIndex(c => c.name === cityName);
     if (index !== -1) {
+        const cityToRemove = cities[index];
+        const deletedCityLeaveDate = cityToRemove.leaveDate;
+        
+        // Before removing, find the city that comes before it in chronological order
+        // Sort all cities (including the one to be removed) by travel order
+        const allCities = [...cities];
+        const sortedCities = allCities.sort((a, b) => {
+            const aDeparture = getDepartureDate(a);
+            const bDeparture = getDepartureDate(b);
+            if (aDeparture && bDeparture) return aDeparture - bDeparture;
+            if (aDeparture) return -1;
+            if (bDeparture) return 1;
+            const aArrival = getArrivalDate(a);
+            const bArrival = getArrivalDate(b);
+            if (aArrival && bArrival) return aArrival - bArrival;
+            return 0;
+        });
+        
+        // Find the deleted city's position in the sorted list
+        const deletedIndexInSorted = sortedCities.findIndex(c => 
+            c.name === cityToRemove.name && 
+            c.lat === cityToRemove.lat && 
+            c.lon === cityToRemove.lon
+        );
+        
         // Remove marker
-        map.removeLayer(markers[index]);
+        if (markers[index]) {
+            map.removeLayer(markers[index]);
+        }
         markers.splice(index, 1);
         
         // Remove label position
@@ -1358,6 +1353,29 @@ function removeCity(cityName) {
         
         // Remove from cities array
         cities.splice(index, 1);
+        
+        // If the deleted city had a departure date and there's a city before it, update that city's departure date
+        if (deletedCityLeaveDate && deletedIndexInSorted > 0) {
+            const previousCityInSorted = sortedCities[deletedIndexInSorted - 1];
+            
+            // Find this city in the current cities array (after removal)
+            const previousCityIndex = cities.findIndex(c => 
+                c.name === previousCityInSorted.name && 
+                c.lat === previousCityInSorted.lat && 
+                c.lon === previousCityInSorted.lon
+            );
+            
+            if (previousCityIndex !== -1) {
+                // Update the previous city's departure date
+                cities[previousCityIndex].leaveDate = deletedCityLeaveDate;
+                
+                // Redraw the marker for the previous city to reflect the updated date
+                if (markers[previousCityIndex]) {
+                    map.removeLayer(markers[previousCityIndex]);
+                    markers[previousCityIndex] = addCityMarker(cities[previousCityIndex], false);
+                }
+            }
+        }
         
         // Update UI
         updateCitiesList();
@@ -2374,11 +2392,14 @@ let isRedrawingLabels = false; // Prevent multiple simultaneous label redraws
 // Update label positions on map move/zoom
 map.on('moveend', () => {
     if (cities.length > 0 && !isProgrammaticZoom) {
-        redrawAllMarkers();
-        // Force opacity fix for digits after move
+        // Small delay to ensure map has fully updated before recalculating
         setTimeout(() => {
-            fixMarkerOpacity();
-        }, 50);
+            redrawAllMarkers();
+            // Force opacity fix for digits after move
+            setTimeout(() => {
+                fixMarkerOpacity();
+            }, 50);
+        }, 10);
     }
     // Don't reset isProgrammaticZoom here - let ensureLabelsVisible handle it
 });
@@ -2386,13 +2407,27 @@ map.on('moveend', () => {
 map.on('zoomend', () => {
     // Only redraw if this is a user-initiated zoom, not programmatic
     if (cities.length > 0 && !isProgrammaticZoom) {
-        redrawAllMarkers();
-        // Force opacity fix for digits after zoom
+        // Small delay to ensure map has fully updated before recalculating arrowhead positions
         setTimeout(() => {
-            fixMarkerOpacity();
-        }, 50);
+            redrawAllMarkers();
+            // Force opacity fix for digits after zoom
+            setTimeout(() => {
+                fixMarkerOpacity();
+            }, 50);
+        }, 10);
     }
     // Don't reset isProgrammaticZoom here - let ensureLabelsVisible handle it
+});
+
+// Also handle viewreset event which fires after map view changes (including zoom)
+map.on('viewreset', () => {
+    if (cities.length > 0 && !isProgrammaticZoom) {
+        // Recalculate arrowhead positions after view reset
+        setTimeout(() => {
+            // Only redraw routes (which includes arrowheads), not all markers
+            drawTravelRoutes();
+        }, 10);
+    }
 });
 
 // Force markers to be fully opaque (fixes browser rendering bug)
