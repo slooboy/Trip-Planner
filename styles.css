@@ -1,0 +1,519 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    zoom: 1 !important;
+    -webkit-transform: scale(1) !important;
+    transform: scale(1) !important;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #f5f5dc;
+    min-height: 100vh;
+    padding: 20px;
+    zoom: 1 !important;
+    -webkit-transform: scale(1) !important;
+    transform: scale(1) !important;
+    width: 100%;
+    margin: 0;
+    overflow-x: auto;
+}
+
+.container {
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    zoom: 1 !important;
+    -webkit-transform: scale(1) !important;
+    transform: scale(1) !important;
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+header p {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.search-container {
+    padding: 25px;
+    background: #f8f9fa;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.input-group {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#cityInput {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    outline: none;
+    height: 48px;
+    box-sizing: border-box;
+}
+
+#cityInput:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.date-pickers {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.date-picker-group input[type="date"] {
+    height: 48px;
+    box-sizing: border-box;
+}
+
+.date-picker-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.date-picker-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.date-picker-group input[type="date"] {
+    padding: 12px 15px;
+    font-size: 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    outline: none;
+    font-family: inherit;
+    min-width: 150px;
+}
+
+.date-picker-group input[type="date"]:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    height: 48px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#addCityBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#addCityBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+#addCityBtn:active {
+    transform: translateY(0);
+}
+
+#clearBtn {
+    background: #e74c3c;
+    color: white;
+    padding: 8px 16px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#clearBtn:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+}
+
+.map-container {
+    display: flex;
+    height: 600px;
+}
+
+#map {
+    flex: 1;
+    height: 100%;
+    z-index: 1;
+}
+
+/* De-emphasize map tiles: saturation 0, contrast 50% */
+#map .leaflet-tile-pane img {
+    filter: grayscale(100%) contrast(50%);
+    -webkit-filter: grayscale(100%) contrast(50%);
+}
+
+.cities-list {
+    width: 300px;
+    padding: 25px;
+    background: #f8f9fa;
+    border-left: 1px solid #e0e0e0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.cities-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cities-list h3 {
+    color: #333;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+#citiesList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+#citiesList li {
+    background: white;
+    padding: 12px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    color: #667eea;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+#citiesList li .city-name {
+    font-weight: 600;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.city-sequence-number {
+    font-size: 1.1em;
+    color: #667eea;
+    font-weight: 700;
+}
+
+#citiesList li .city-dates {
+    font-size: 0.85em;
+    color: #888;
+    font-weight: 400;
+}
+
+#citiesList li .city-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+#citiesList li .remove-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+#citiesList li .remove-btn:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.city-marker {
+    background: transparent !important;
+    border: none !important;
+    opacity: 1 !important; /* Ensure marker container is fully opaque */
+}
+
+.city-marker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+    opacity: 1 !important; /* Ensure wrapper is fully opaque */
+    isolation: isolate; /* Create new stacking context to prevent opacity inheritance */
+}
+
+.city-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #667eea;
+    border: 3px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    flex-shrink: 0;
+    pointer-events: auto;
+    position: relative;
+    opacity: 1 !important; /* Force full opacity */
+    isolation: isolate; /* Create new stacking context */
+    transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.city-sequence {
+    color: white !important;
+    font-size: 14px;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block;
+    position: relative;
+    z-index: 10;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    mix-blend-mode: normal !important; /* Prevent blend mode issues */
+    filter: none !important; /* Prevent filter-based opacity */
+}
+
+.city-dot svg {
+    opacity: 1 !important;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    will-change: transform; /* Force GPU acceleration */
+}
+
+.city-dot .city-sequence {
+    will-change: transform; /* Force GPU acceleration to prevent transparency */
+    backface-visibility: hidden; /* Prevent rendering issues */
+    transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.city-label-marker {
+    background: transparent !important;
+    border: none !important;
+    pointer-events: none;
+}
+
+.city-label {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.city-label-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.2;
+}
+
+.city-label-dates {
+    font-size: 11px;
+    font-style: italic;
+    color: #666;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+/* Label positioning classes - corners and sides */
+/* Labels are positioned using iconAnchor, so no transform needed */
+
+#testCitiesBtn {
+    background: #27ae60;
+    color: white;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 9px;
+    letter-spacing: 0.3px;
+    min-width: 48px;
+}
+
+#testCitiesBtn:hover {
+    background: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+}
+
+#testJapanBtn {
+    background: #27ae60;
+    color: white;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+    flex-shrink: 0;
+    line-height: 1.1;
+    text-align: center;
+    letter-spacing: 0;
+    min-width: 48px;
+}
+
+#testJapanBtn:hover {
+    background: #229954;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+}
+
+#testJapanBtn.adding {
+    font-size: 9px;
+    letter-spacing: 0.3px;
+}
+
+.arrow-icon {
+    background: transparent !important;
+    border: none !important;
+    z-index: 1000;
+}
+
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.8em;
+    }
+    
+    .search-container {
+        flex-direction: column;
+    }
+    
+    #cityInput {
+        width: 100%;
+    }
+    
+    .date-pickers {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .date-picker-group {
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .date-picker-group input[type="date"] {
+        width: 100%;
+    }
+    
+    button {
+        width: 100%;
+    }
+    
+    .map-container {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    #map {
+        height: 400px;
+    }
+    
+    .cities-list {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid #e0e0e0;
+        max-height: 300px;
+    }
+    
+    .cities-list-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    #clearBtn {
+        width: auto;
+    }
+}

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Map Explorer</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="search-container">
+            <div class="input-group">
+                <label for="cityInput">PLACE</label>
+                <input 
+                    type="text" 
+                    id="cityInput" 
+                    placeholder="(Paris, Tokyo, Rhode Island ...)"
+                    autocomplete="off"
+                />
+            </div>
+            <div class="date-pickers">
+                <div class="date-picker-group">
+                    <label for="arriveDate">Arrive</label>
+                    <input type="date" id="arriveDate" />
+                </div>
+                <div class="date-picker-group">
+                    <label for="leaveDate">Leave</label>
+                    <input type="date" id="leaveDate" />
+                </div>
+            </div>
+            <button id="addCityBtn">Add</button>
+            <button id="testCitiesBtn">TEST</button>
+            <button id="testJapanBtn">日本</button>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <div class="cities-list">
+                <div class="cities-list-header">
+                    <h3>Destinations</h3>
+                    <button id="clearBtn">Clear All</button>
+                </div>
+                <ul id="citiesList"></ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>
