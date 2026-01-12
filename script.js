@@ -376,21 +376,64 @@ function countCurveOverlaps(pathPoints, existingCurves, minDistance = 0.01) {
 // Create arrow icon for polyline with rotation (subtle, no outline)
 function createArrowIcon(angle) {
     // Create a visible SVG arrow without white outline
+    // Arrow pointing RIGHT by default (tip at right, base at left)
+    // Calculate rotated path coordinates directly based on angle
+    
+    // Original arrow points right: tip at (15, 8), base at (1, 8)
+    // Arrow shape points: tip (15,8), top wing (11,0), top notch (11,6), base left (1,8), bottom notch (11,10), bottom wing (11,16)
+    // Made 2x wider: wings now extend from y=0 to y=16 (was y=4 to y=12)
+    const centerX = 8;
+    const centerY = 8;
+    const angleRad = angle * Math.PI / 180;
+    const cos = Math.cos(angleRad);
+    const sin = Math.sin(angleRad);
+    
+    // Function to rotate a point around the center
+    function rotatePoint(x, y) {
+        const dx = x - centerX;
+        const dy = y - centerY;
+        return {
+            x: centerX + dx * cos - dy * sin,
+            y: centerY + dx * sin + dy * cos
+        };
+    }
+    
+    // Original arrow points (pointing right) - 2x wider by expanding horizontally
+    // Making the arrowhead wider by spreading the wings further apart horizontally
+    const points = [
+        [-3, 8],  // base left (was 1, now -3 for 2x wider base)
+        [7, 4],   // top wing (was 11, now 7 - moved left to widen)
+        [7, 7],   // top notch (was 11, now 7)
+        [15, 8],  // tip (stays the same)
+        [7, 9],   // bottom notch (was 11, now 7)
+        [7, 12]   // bottom wing (was 11, now 7)
+    ];
+    
+    // Rotate all points
+    const rotatedPoints = points.map(([x, y]) => rotatePoint(x, y));
+    
+    // Build path string
+    const pathData = rotatedPoints.map((p, i) => 
+        i === 0 ? `M ${p.x.toFixed(2)} ${p.y.toFixed(2)}` : `L ${p.x.toFixed(2)} ${p.y.toFixed(2)}`
+    ).join(' ') + ' Z';
+    
     const svg = `
-        <svg width="20" height="20" viewBox="0 0 16 16" style="transform: rotate(${angle}deg); transform-origin: center; opacity: 1;">
-            <path d="M 2 8 L 12 3 L 12 6 L 14 6 L 14 10 L 12 10 L 12 13 Z" 
+        <svg width="24" height="24" viewBox="0 0 16 16" style="opacity: 1; overflow: visible;">
+            <path d="${pathData}" 
                   fill="#667eea" 
                   stroke="none"/>
         </svg>
     `;
     
-    return L.divIcon({
+    const icon = L.divIcon({
         className: 'arrow-icon',
         html: svg,
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
         zIndexOffset: 1000 // Ensure arrowheads appear above city dots
     });
+    
+    return icon;
 }
 
 // Track curve index for alternating up/down
@@ -452,61 +495,7 @@ function createCurvedArrow(from, to, existingCurves = [], alternateDirection = n
     const destScreenX = destScreenPoint.x;
     const destScreenY = destScreenPoint.y;
     
-    // Place arrowhead halfway along the curve
-    const midpointIndex = Math.floor(pathPoints.length / 2);
-    const midpointPoint = pathPoints[midpointIndex];
-    
-    // Calculate arrow position and angle
-    let arrowLat, arrowLon, arrowAngle;
-    
-    arrowLat = midpointPoint[0];
-    arrowLon = midpointPoint[1];
-    
-    // Calculate angle - arrow should point along the curve toward the destination
-    // The curve goes from 'from' (origin) to 'to' (destination)
-    // Get points before and after midpoint to calculate the curve direction
-    const prevIndex = Math.max(0, midpointIndex - 1);
-    const nextIndex = Math.min(pathPoints.length - 1, midpointIndex + 1);
-    const prevPoint = pathPoints[prevIndex];
-    const nextPoint = pathPoints[nextIndex];
-    
-    // Convert to screen coordinates for accurate angle calculation
-    const prevScreen = map.latLngToContainerPoint([prevPoint[0], prevPoint[1]]);
-    const nextScreen = map.latLngToContainerPoint([nextPoint[0], nextPoint[1]]);
-    
-    // Calculate direction along the curve (from previous to next point)
-    // This should be from origin toward destination
-    const dx = nextScreen.x - prevScreen.x;
-    const dy = nextScreen.y - prevScreen.y;
-    
-    // Verify direction: if nextIndex > prevIndex, we're going forward (correct)
-    // If the direction seems reversed, we can also check by comparing to destination
-    // For now, use the direction from prev to next (should be forward)
-    arrowAngle = Math.atan2(dy, dx) * 180 / Math.PI;
-    
-    // Double-check: if the angle seems wrong, verify by checking direction to destination
-    const midpointScreen = map.latLngToContainerPoint([arrowLat, arrowLon]);
-    const toDestDx = destScreenX - midpointScreen.x;
-    const toDestDy = destScreenY - midpointScreen.y;
-    const toDestAngle = Math.atan2(toDestDy, toDestDx) * 180 / Math.PI;
-    
-    // Use the direction along the curve, but ensure it's pointing toward destination
-    // If the angle difference is > 90 degrees, we might be going backward
-    const angleDiff = Math.abs(arrowAngle - toDestAngle);
-    if (angleDiff > 90 && angleDiff < 270) {
-        // Reverse the direction (add 180 degrees)
-        arrowAngle = (arrowAngle + 180) % 360;
-    }
-    
-    // Add arrowhead at the intersection point where curve touches city dot
-    console.log('Creating arrowhead:', { arrowLat, arrowLon, arrowAngle, destLat, destLon });
-    const destArrowMarker = L.marker([arrowLat, arrowLon], {
-        icon: createArrowIcon(arrowAngle),
-        zIndexOffset: 2000 // Higher than city dots to ensure visibility
-    }).addTo(map);
-    
-    console.log('Arrowhead marker created:', destArrowMarker, 'on map:', map.hasLayer(destArrowMarker));
-    arrowMarkers.push(destArrowMarker);
+    // Arrowheads removed - no longer drawing them
     
     return { polyline, arrowMarkers, points: pathPoints, direction: selectedDirection };
 }
@@ -1306,7 +1295,31 @@ function addCityToList(city) {
         ${dateRange ? `<div class="city-dates">${dateRange}</div>` : ''}
     `;
     
-    li.querySelector('.remove-btn').addEventListener('click', () => {
+    // Add click handler for the entire list item to populate form fields
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', (e) => {
+        // Don't trigger if clicking the remove button
+        if (e.target.classList.contains('remove-btn')) {
+            return;
+        }
+        // Populate the form fields with this city's data
+        cityInput.value = city.name;
+        if (city.arriveDate) {
+            arriveDate.value = city.arriveDate;
+        } else {
+            arriveDate.value = '';
+        }
+        if (city.leaveDate) {
+            leaveDate.value = city.leaveDate;
+        } else {
+            leaveDate.value = '';
+        }
+        // Focus the city input field
+        cityInput.focus();
+    });
+    
+    li.querySelector('.remove-btn').addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent the li click handler from firing
         removeCity(city.name);
     });
     
