@@ -1,5 +1,20 @@
 // Initialize the map
-const map = L.map('map').setView([20, 0], 2);
+const map = L.map('map', {
+    zoomControl: true,
+    attributionControl: true
+}).setView([20, 0], 2);
+
+// Ensure map resizes properly on mobile
+setTimeout(() => {
+    map.invalidateSize();
+}, 100);
+
+// Also invalidate on window resize
+window.addEventListener('resize', () => {
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+});
 
 // Add CartoDB Positron tiles (cleaner, no territorial water borders)
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -13,6 +28,7 @@ const markers = [];
 const routeLines = [];
 const labelPositions = []; // Store label positions for collision detection
 const labelLines = []; // Store lines connecting labels to city dots when not adjacent
+let editingCityIndex = null; // Track which city is being edited (null = adding new city)
 
 // DOM elements
 const cityInput = document.getElementById('cityInput');
@@ -1328,20 +1344,36 @@ function addCityToList(city) {
         if (e.target.classList.contains('remove-btn')) {
             return;
         }
-        // Populate the form fields with this city's data
-        cityInput.value = city.name;
-        if (city.arriveDate) {
-            arriveDate.value = city.arriveDate;
-        } else {
-            arriveDate.value = '';
+        // Find the index of this city in the cities array
+        const cityIndex = cities.findIndex(c => 
+            c.name === city.name && 
+            c.lat === city.lat && 
+            c.lon === city.lon
+        );
+        
+        if (cityIndex >= 0) {
+            // Set editing mode
+            editingCityIndex = cityIndex;
+            
+            // Populate the form fields with this city's data
+            cityInput.value = city.name;
+            if (city.arriveDate) {
+                arriveDate.value = city.arriveDate;
+            } else {
+                arriveDate.value = '';
+            }
+            if (city.leaveDate) {
+                leaveDate.value = city.leaveDate;
+            } else {
+                leaveDate.value = '';
+            }
+            
+            // Change button to "DONE"
+            addCityBtn.textContent = 'DONE';
+            
+            // Focus the city input field
+            cityInput.focus();
         }
-        if (city.leaveDate) {
-            leaveDate.value = city.leaveDate;
-        } else {
-            leaveDate.value = '';
-        }
-        // Focus the city input field
-        cityInput.focus();
     });
     
     li.querySelector('.remove-btn').addEventListener('click', (e) => {
@@ -2053,7 +2085,78 @@ const testCitiesList = [
     'Rome',
     'Athens',
     'Marrakech',
-    'Kathmandu'
+    'Kathmandu',
+    // 50 more cities added
+    'Berlin',
+    'Madrid',
+    'Lisbon',
+    'Dublin',
+    'Stockholm',
+    'Copenhagen',
+    'Oslo',
+    'Helsinki',
+    'Krakow',
+    'Budapest',
+    'Bucharest',
+    'Sofia',
+    'Belgrade',
+    'Zagreb',
+    'Ljubljana',
+    'Bratislava',
+    'Luxembourg',
+    'Brussels',
+    'Geneva',
+    'Zurich',
+    'Munich',
+    'Frankfurt',
+    'Hamburg',
+    'Cologne',
+    'Milan',
+    'Florence',
+    'Venice',
+    'Naples',
+    'Porto',
+    'Seville',
+    'Valencia',
+    'Granada',
+    'Glasgow',
+    'Manchester',
+    'Birmingham',
+    'Liverpool',
+    'Bristol',
+    'Leeds',
+    'Newcastle',
+    'Cardiff',
+    'Belfast',
+    'Reykjavik',
+    'Tallinn',
+    'Riga',
+    'Vilnius',
+    'Kiev',
+    'Minsk',
+    'Moscow',
+    'Saint Petersburg',
+    'Ankara',
+    'Tel Aviv',
+    'Jerusalem',
+    'Beirut',
+    'Damascus',
+    'Baghdad',
+    'Tehran',
+    'Kabul',
+    'Islamabad',
+    'Lahore',
+    'Karachi',
+    'Dhaka',
+    'Colombo',
+    'Yangon',
+    'Hanoi',
+    'Ho Chi Minh City',
+    'Phnom Penh',
+    'Vientiane',
+    'Manila',
+    'Jakarta',
+    'Kuala Lumpur'
 ];
 
 // Japanese prefectural capitals and airports list

@@ -14,9 +14,9 @@ html {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: #f5f5dc;
+    background: white;
     min-height: 100vh;
-    padding: 20px;
+    padding: 0;
     zoom: 1 !important;
     -webkit-transform: scale(1) !important;
     transform: scale(1) !important;
@@ -30,8 +30,8 @@ body {
     width: 100%;
     margin: 0 auto;
     background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
     zoom: 1 !important;
     -webkit-transform: scale(1) !important;
@@ -39,15 +39,15 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 20px;
+    background: linear-gradient(135deg, #e8d5f2 0%, #d4c4e8 100%);
+    color: #5a4a6a;
+    padding: 8px 12px;
     text-align: center;
     width: 100%;
 }
 
 header h1 {
-    font-size: 1.2em;
+    font-size: 0.9em;
     margin: 0;
     font-weight: 600;
 }
@@ -58,10 +58,10 @@ header p {
 }
 
 .search-container {
-    padding: 25px;
+    padding: 8px;
     background: #f8f9fa;
     display: flex;
-    gap: 15px;
+    gap: 6px;
     flex-wrap: wrap;
     align-items: flex-end;
     border-bottom: 1px solid #e0e0e0;
@@ -69,29 +69,29 @@ header p {
 
 .input-group {
     flex: 1;
-    min-width: 250px;
+    min-width: 120px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
 }
 
 .input-group label {
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 600;
     color: #666;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 #cityInput {
     width: 100%;
-    padding: 12px 20px;
-    font-size: 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
     transition: all 0.3s ease;
     outline: none;
-    height: 48px;
+    height: 32px;
     box-sizing: border-box;
 }
 
@@ -102,38 +102,38 @@ header p {
 
 .date-pickers {
     display: flex;
-    gap: 15px;
+    gap: 6px;
     align-items: flex-end;
 }
 
 .date-picker-group input[type="date"] {
-    height: 48px;
+    height: 32px;
     box-sizing: border-box;
 }
 
 .date-picker-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 3px;
 }
 
 .date-picker-group label {
-    font-size: 12px;
+    font-size: 9px;
     font-weight: 600;
     color: #666;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .date-picker-group input[type="date"] {
-    padding: 12px 15px;
-    font-size: 14px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
     transition: all 0.3s ease;
     outline: none;
     font-family: inherit;
-    min-width: 150px;
+    min-width: 100px;
 }
 
 .date-picker-group input[type="date"]:focus {
@@ -142,16 +142,16 @@ header p {
 }
 
 button {
-    padding: 15px 30px;
-    font-size: 16px;
+    padding: 6px 12px;
+    font-size: 11px;
     font-weight: 600;
     border: none;
-    border-radius: 10px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    height: 48px;
+    letter-spacing: 0.3px;
+    height: 32px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -159,8 +159,8 @@ button {
 }
 
 #addCityBtn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, #e8d5f2 0%, #d4c4e8 100%);
+    color: #5a4a6a;
 }
 
 #addCityBtn:hover {
@@ -175,10 +175,11 @@ button {
 #clearBtn {
     background: #e74c3c;
     color: white;
-    padding: 8px 16px;
-    font-size: 12px;
+    padding: 4px 8px;
+    font-size: 9px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    height: 24px;
 }
 
 #clearBtn:hover {
@@ -189,12 +190,14 @@ button {
 
 .map-container {
     display: flex;
-    height: 600px;
+    height: calc(100vh - 120px);
+    min-height: 400px;
 }
 
 #map {
     flex: 1;
     height: 100%;
+    width: 100%;
     z-index: 1;
 }
 
@@ -206,7 +209,7 @@ button {
 
 .cities-list {
     width: 300px;
-    padding: 25px;
+    padding: 12px;
     background: #f8f9fa;
     border-left: 1px solid #e0e0e0;
     overflow-y: auto;
@@ -218,12 +221,12 @@ button {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 
 .cities-list h3 {
     color: #333;
-    font-size: 1.2em;
+    font-size: 0.9em;
     margin: 0;
 }
 
@@ -238,23 +241,23 @@ button {
 
 #citiesList li {
     background: white;
-    padding: 12px 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 8px 10px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     color: #667eea;
     font-weight: 500;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 4px;
 }
 
 #citiesList li .city-name {
     font-weight: 600;
-    font-size: 1em;
+    font-size: 0.85em;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .city-sequence-number {
@@ -410,13 +413,13 @@ button {
 #testCitiesBtn {
     background: #27ae60;
     color: white;
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border-radius: 50%;
-    font-size: 9px;
-    letter-spacing: 0.3px;
-    min-width: 48px;
+    font-size: 7px;
+    letter-spacing: 0.2px;
+    min-width: 32px;
 }
 
 #testCitiesBtn:hover {
@@ -428,12 +431,12 @@ button {
 #testJapanBtn {
     background: #27ae60;
     color: white;
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     border: none;
     border-radius: 50%;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -442,7 +445,7 @@ button {
     line-height: 1.1;
     text-align: center;
     letter-spacing: 0;
-    min-width: 48px;
+    min-width: 32px;
 }
 
 #testJapanBtn:hover {
@@ -463,58 +466,112 @@ button {
 }
 
 @media (max-width: 768px) {
+    body {
+        padding: 0;
+    }
+    
+    header {
+        padding: 6px 8px;
+    }
+    
     header h1 {
-        font-size: 1.8em;
+        font-size: 0.8em;
     }
     
     .search-container {
-        flex-direction: column;
+        flex-direction: row;
+        padding: 6px;
+        gap: 4px;
+    }
+    
+    .input-group {
+        min-width: 0;
+        flex: 1;
     }
     
     #cityInput {
         width: 100%;
+        font-size: 12px;
+        padding: 5px 8px;
+        height: 28px;
     }
     
     .date-pickers {
-        width: 100%;
-        flex-wrap: wrap;
+        gap: 4px;
     }
     
     .date-picker-group {
-        flex: 1;
-        min-width: 150px;
+        min-width: 80px;
     }
     
     .date-picker-group input[type="date"] {
         width: 100%;
+        font-size: 11px;
+        padding: 5px 6px;
+        height: 28px;
+        min-width: 0;
     }
     
     button {
-        width: 100%;
+        padding: 5px 8px;
+        font-size: 10px;
+        height: 28px;
+    }
+    
+    #testCitiesBtn,
+    #testJapanBtn {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        font-size: 6px;
     }
     
     .map-container {
         flex-direction: column;
-        height: auto;
+        height: calc(100vh - 100px);
+        min-height: 300px;
     }
     
     #map {
-        height: 400px;
+        height: 100%;
+        width: 100%;
+        min-height: 300px;
     }
     
     .cities-list {
         width: 100%;
         border-left: none;
         border-top: 1px solid #e0e0e0;
-        max-height: 300px;
+        max-height: 200px;
+        padding: 8px;
     }
     
     .cities-list-header {
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 6px;
+        margin-bottom: 6px;
+    }
+    
+    .cities-list h3 {
+        font-size: 0.8em;
     }
     
     #clearBtn {
         width: auto;
+        height: 22px;
+        padding: 3px 6px;
+        font-size: 8px;
+    }
+    
+    #citiesList li {
+        padding: 6px 8px;
+    }
+    
+    #citiesList li .city-name {
+        font-size: 0.8em;
+    }
+    
+    #citiesList li .city-dates {
+        font-size: 0.75em;
     }
 }
