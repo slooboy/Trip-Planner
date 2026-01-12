@@ -375,9 +375,9 @@ function countCurveOverlaps(pathPoints, existingCurves, minDistance = 0.01) {
 
 // Create arrow icon for polyline with rotation (subtle, no outline)
 function createArrowIcon(angle) {
-    // Create a subtle, smaller SVG arrow without white outline
+    // Create a visible SVG arrow without white outline
     const svg = `
-        <svg width="16" height="16" viewBox="0 0 16 16" style="transform: rotate(${angle}deg); transform-origin: center; opacity: 0.7;">
+        <svg width="20" height="20" viewBox="0 0 16 16" style="transform: rotate(${angle}deg); transform-origin: center; opacity: 1;">
             <path d="M 2 8 L 12 3 L 12 6 L 14 6 L 14 10 L 12 10 L 12 13 Z" 
                   fill="#667eea" 
                   stroke="none"/>
@@ -387,8 +387,9 @@ function createArrowIcon(angle) {
     return L.divIcon({
         className: 'arrow-icon',
         html: svg,
-        iconSize: [16, 16],
-        iconAnchor: [8, 8]
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        zIndexOffset: 1000 // Ensure arrowheads appear above city dots
     });
 }
 
@@ -492,17 +493,23 @@ function createCurvedArrow(from, to, existingCurves = [], alternateDirection = n
             const dirX = dx / distance;
             const dirY = dy / distance;
             
-            // Calculate point on circle edge (cityDotRadius from center)
-            // This is where the curve touches the city dot
-            const intersectionX = destScreenX + dirX * cityDotRadius;
-            const intersectionY = destScreenY + dirY * cityDotRadius;
+            // Calculate point outside the city dot where arrowhead should be placed
+            // City dot radius is 15px, arrowhead is 20x20 (10px radius)
+            // Place arrowhead at cityDotRadius + arrowheadRadius + small gap
+            const arrowheadRadius = 10; // Half of 20px arrowhead size
+            const gap = 3; // Small gap between dot and arrowhead
+            const arrowheadDistance = cityDotRadius + arrowheadRadius + gap; // Total: 15 + 10 + 3 = 28px from center
+            
+            // Calculate point outside the city dot circle
+            const arrowheadX = destScreenX + dirX * arrowheadDistance;
+            const arrowheadY = destScreenY + dirY * arrowheadDistance;
             
             // Convert back to lat/lon
-            const intersectionLatLng = map.containerPointToLatLng([intersectionX, intersectionY]);
-            arrowLat = intersectionLatLng.lat;
-            arrowLon = intersectionLatLng.lng;
+            const arrowheadLatLng = map.containerPointToLatLng([arrowheadX, arrowheadY]);
+            arrowLat = arrowheadLatLng.lat;
+            arrowLon = arrowheadLatLng.lng;
             
-            // Calculate angle - arrow should point from curve toward city center
+            // Calculate angle - arrow should point from arrowhead toward city center
             // The direction vector points from city to curve, so reverse it for arrow direction
             arrowAngle = Math.atan2(-dirY, -dirX) * 180 / Math.PI;
         } else {
@@ -527,10 +534,13 @@ function createCurvedArrow(from, to, existingCurves = [], alternateDirection = n
     }
     
     // Add arrowhead at the intersection point where curve touches city dot
+    console.log('Creating arrowhead:', { arrowLat, arrowLon, arrowAngle, destLat, destLon });
     const destArrowMarker = L.marker([arrowLat, arrowLon], {
-        icon: createArrowIcon(arrowAngle)
+        icon: createArrowIcon(arrowAngle),
+        zIndexOffset: 2000 // Higher than city dots to ensure visibility
     }).addTo(map);
     
+    console.log('Arrowhead marker created:', destArrowMarker, 'on map:', map.hasLayer(destArrowMarker));
     arrowMarkers.push(destArrowMarker);
     
     return { polyline, arrowMarkers, points: pathPoints, direction: selectedDirection };
@@ -592,6 +602,12 @@ function drawTravelRoutes() {
                     existingCurves
                 );
                 if (route) {
+                    console.log('Route created from', from.name, 'to', to.name, 'Arrow markers:', route.arrowMarkers?.length || 0);
+                    if (route.arrowMarkers && route.arrowMarkers.length > 0) {
+                        route.arrowMarkers.forEach((arrowMarker, idx) => {
+                            console.log(`  Arrow marker ${idx}:`, arrowMarker.getLatLng(), 'on map:', map.hasLayer(arrowMarker));
+                        });
+                    }
                     routeLines.push(route);
                     // Add this route to existing curves for next iteration
                     existingCurves.push({ points: route.points });
@@ -633,18 +649,18 @@ function countLabelOverlaps(labelX, labelY, existingElements, labelWidth = 120, 
                 labelOverlapCount++; // Label-to-label overlap - not allowed
             }
         } else {
-            // Element is circular (cities, arrows) - labels can overlap these slightly
+            // Element is circular (cities, curves) - labels should NOT overlap these
             const elementRadius = element.radius || 20;
             elementLeft = element.x - elementRadius;
             elementRight = element.x + elementRadius;
             elementTop = element.y - elementRadius;
             elementBottom = element.y + elementRadius;
             
-            // Check if bounding boxes overlap (with small padding)
-            const padding = 5;
+            // Check if bounding boxes overlap (with padding to ensure no overlap)
+            const padding = 3; // Small padding to ensure labels don't touch dots/curves
             if (!(labelRight + padding < elementLeft || labelLeft - padding > elementRight || 
                   labelBottom + padding < elementTop || labelTop - padding > elementBottom)) {
-                overlapCount++; // Overlap with non-label element
+                overlapCount++; // Overlap with city dot or curve - not allowed
             }
         }
     }
@@ -658,34 +674,39 @@ function countLabelOverlaps(labelX, labelY, existingElements, labelWidth = 120, 
 function getOccupiedPositions() {
     const occupied = [];
     
-    // Add city positions
+    // Add city positions with proper radius (city dots are 15px radius, add padding)
     cities.forEach(city => {
         if (city && typeof city.lat === 'number' && typeof city.lon === 'number' && 
             !isNaN(city.lat) && !isNaN(city.lon)) {
             try {
                 const screenPoint = map.latLngToContainerPoint([city.lat, city.lon]);
-                occupied.push({ x: screenPoint.x, y: screenPoint.y, type: 'city', radius: 20 });
+                // City dot radius is 15px, add padding to ensure labels don't overlap
+                occupied.push({ x: screenPoint.x, y: screenPoint.y, type: 'city', radius: 18 });
             } catch (e) {
                 console.warn('Invalid city coordinates:', city);
             }
         }
     });
     
-    // Add arrow positions (along the path) - use stored points instead of polyline._latlngs
+    // Add curve path segments (not just points) - sample the curve path
     routeLines.forEach(route => {
-        if (route && route.points && Array.isArray(route.points)) {
-            route.points.forEach(point => {
+        if (route && route.points && Array.isArray(route.points) && route.points.length > 1) {
+            // Sample points along the curve path (every 10th point to avoid too many checks)
+            const sampleRate = Math.max(1, Math.floor(route.points.length / 20)); // Sample ~20 points per curve
+            for (let i = 0; i < route.points.length; i += sampleRate) {
+                const point = route.points[i];
                 if (point && Array.isArray(point) && point.length >= 2 && 
                     typeof point[0] === 'number' && typeof point[1] === 'number' &&
                     !isNaN(point[0]) && !isNaN(point[1])) {
                     try {
                         const screenPoint = map.latLngToContainerPoint([point[0], point[1]]);
-                        occupied.push({ x: screenPoint.x, y: screenPoint.y, type: 'arrow', radius: 10 });
+                        // Curve width is 4px, add padding
+                        occupied.push({ x: screenPoint.x, y: screenPoint.y, type: 'curve', radius: 8 });
                     } catch (e) {
-                        console.warn('Invalid arrow point:', point);
+                        console.warn('Invalid curve point:', point);
                     }
                 }
-            });
+            }
         }
     });
     
@@ -821,8 +842,8 @@ function calculateLabelPosition(cityLat, cityLon) {
     
     // Generate positions: first try 8 positions touching the dot, then try further positions if needed
     const baseSpacing = spacing;
-    const maxSpacing = 100; // Maximum distance to try
-    const spacingSteps = [baseSpacing, baseSpacing * 2, baseSpacing * 4, baseSpacing * 8]; // Try increasing distances
+    const maxSpacing = 200; // Maximum distance to try (increased to allow labels further from dots)
+    const spacingSteps = [baseSpacing, baseSpacing * 2, baseSpacing * 4, baseSpacing * 8, baseSpacing * 16]; // Try increasing distances
     
     let bestPos = null;
     let bestScore = Infinity;
@@ -904,7 +925,7 @@ function calculateLabelPosition(cityLat, cityLon) {
         }
         
         // If we found a good position (no overlaps) in preferred direction, use it
-        if (bestPos && bestPos.overlapCount !== undefined && bestPos.overlapCount < 1000) {
+        if (foundGoodPosition) {
             break; // Break out of spacing loop
         }
     }
@@ -1049,7 +1070,11 @@ function addCityMarker(city, showLabel = false) {
         popupAnchor: [0, -15]
     });
     
-    const marker = L.marker([city.lat, city.lon], { icon: icon }).addTo(map);
+    // Create marker with z-index below arrowheads
+    const marker = L.marker([city.lat, city.lon], {
+        icon: icon,
+        zIndexOffset: 100 // City markers below arrowheads (which are at 2000)
+    }).addTo(map);
     
     const days = calculateDays(city.arriveDate, city.leaveDate);
     let popupContent = `<b>${city.name}</b><br>${city.fullName}`;
@@ -2093,6 +2118,29 @@ async function addTestCities() {
             leaveDate.setDate(leaveDate.getDate() + days);
             const leaveDateStr = leaveDate.toISOString().split('T')[0];
             
+            // Before adding the new city, check if the last city (chronologically) has no departure date
+            // If so, set it to this new city's arrival date
+            if (arriveDateStr && cities.length > 0) {
+                const sortedCities = sortCitiesByTravelOrder();
+                const lastCity = sortedCities[sortedCities.length - 1];
+                if (lastCity && !lastCity.leaveDate) {
+                    // Set the last city's departure date to the new city's arrival date
+                    lastCity.leaveDate = arriveDateStr;
+                    // Find the index of the last city in the original cities array
+                    const lastCityIndex = cities.findIndex(c => 
+                        c.name === lastCity.name && 
+                        c.lat === lastCity.lat && 
+                        c.lon === lastCity.lon &&
+                        c.arriveDate === lastCity.arriveDate
+                    );
+                    // Update the marker for the last city if it exists
+                    if (lastCityIndex >= 0 && markers[lastCityIndex]) {
+                        map.removeLayer(markers[lastCityIndex]);
+                        markers[lastCityIndex] = addCityMarker(cities[lastCityIndex], false);
+                    }
+                }
+            }
+            
             // Geocode city
             const city = await geocodeCity(cityName);
             city.arriveDate = arriveDateStr;
@@ -2219,6 +2267,29 @@ async function addTestJapanCities() {
             const leaveDate = new Date(currentDate);
             leaveDate.setDate(leaveDate.getDate() + days);
             const leaveDateStr = leaveDate.toISOString().split('T')[0];
+            
+            // Before adding the new city, check if the last city (chronologically) has no departure date
+            // If so, set it to this new city's arrival date
+            if (arriveDateStr && cities.length > 0) {
+                const sortedCities = sortCitiesByTravelOrder();
+                const lastCity = sortedCities[sortedCities.length - 1];
+                if (lastCity && !lastCity.leaveDate) {
+                    // Set the last city's departure date to the new city's arrival date
+                    lastCity.leaveDate = arriveDateStr;
+                    // Find the index of the last city in the original cities array
+                    const lastCityIndex = cities.findIndex(c => 
+                        c.name === lastCity.name && 
+                        c.lat === lastCity.lat && 
+                        c.lon === lastCity.lon &&
+                        c.arriveDate === lastCity.arriveDate
+                    );
+                    // Update the marker for the last city if it exists
+                    if (lastCityIndex >= 0 && markers[lastCityIndex]) {
+                        map.removeLayer(markers[lastCityIndex]);
+                        markers[lastCityIndex] = addCityMarker(cities[lastCityIndex], false);
+                    }
+                }
+            }
             
             // Geocode city in Japan (ensures we get Japanese cities, not cities with same name elsewhere)
             const city = await geocodeCityInJapan(cityName);
