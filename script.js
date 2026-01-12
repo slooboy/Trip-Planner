@@ -1885,21 +1885,6 @@ async function addCity() {
         return;
     }
     
-    // Check if city already exists (case-insensitive name check)
-    // But allow same city with different dates
-    const existingCity = cities.find(c => c.name.toLowerCase() === cityName.toLowerCase());
-    if (existingCity) {
-        // Check if it's the exact same city with same dates
-        const arriveDateValue = arriveDate.value || null;
-        const leaveDateValue = leaveDate.value || null;
-        if (existingCity.arriveDate === arriveDateValue && existingCity.leaveDate === leaveDateValue) {
-            alert('This city with these dates is already on the map');
-            cityInput.value = '';
-            return;
-        }
-        // If different dates, allow it (will be merged if adjacent)
-    }
-    
     // Get date values (optional)
     const arriveDateValue = arriveDate.value || null;
     const leaveDateValue = leaveDate.value || null;
@@ -1916,6 +1901,81 @@ async function addCity() {
     if (leaveDateValue && leaveDate.min && leaveDateValue < leaveDate.min) {
         alert(`Leave date must be on or after ${leaveDate.min}`);
         return;
+    }
+    
+    // Check if we're editing an existing city
+    if (editingCityIndex !== null && editingCityIndex >= 0 && editingCityIndex < cities.length) {
+        // Update existing city
+        const cityToUpdate = cities[editingCityIndex];
+        
+        // Update dates
+        cityToUpdate.arriveDate = arriveDateValue;
+        cityToUpdate.leaveDate = leaveDateValue;
+        
+        // If city name changed, re-geocode
+        if (cityName.toLowerCase() !== cityToUpdate.name.toLowerCase()) {
+            // Disable input and button while loading
+            cityInput.disabled = true;
+            addCityBtn.disabled = true;
+            addCityBtn.textContent = 'Loading...';
+            cityInput.classList.add('loading');
+            
+            try {
+                const geocodedCity = await geocodeCity(cityName);
+                // Update city location if geocoding succeeded
+                cityToUpdate.name = geocodedCity.name;
+                cityToUpdate.lat = geocodedCity.lat;
+                cityToUpdate.lon = geocodedCity.lon;
+                cityToUpdate.fullName = geocodedCity.fullName;
+            } catch (error) {
+                alert(error.message);
+                cityInput.disabled = false;
+                addCityBtn.disabled = false;
+                addCityBtn.textContent = 'DONE';
+                cityInput.classList.remove('loading');
+                return;
+            }
+        }
+        
+        // Update the marker
+        if (markers[editingCityIndex]) {
+            map.removeLayer(markers[editingCityIndex]);
+            markers[editingCityIndex] = addCityMarker(cityToUpdate, false);
+        }
+        
+        // Update cities list
+        updateCitiesList();
+        
+        // Redraw routes and labels
+        drawTravelRoutes();
+        setTimeout(() => {
+            redrawAllLabels();
+        }, 200);
+        
+        // Clear form and reset editing state
+        cityInput.value = '';
+        arriveDate.value = '';
+        leaveDate.value = '';
+        editingCityIndex = null;
+        addCityBtn.textContent = 'Add';
+        updateDatePickerState();
+        cityInput.focus();
+        
+        return;
+    }
+    
+    // Adding a new city (not editing)
+    // Check if city already exists (case-insensitive name check)
+    // But allow same city with different dates
+    const existingCity = cities.find(c => c.name.toLowerCase() === cityName.toLowerCase());
+    if (existingCity) {
+        // Check if it's the exact same city with same dates
+        if (existingCity.arriveDate === arriveDateValue && existingCity.leaveDate === leaveDateValue) {
+            alert('This city with these dates is already on the map');
+            cityInput.value = '';
+            return;
+        }
+        // If different dates, allow it (will be merged if adjacent)
     }
     
     // Disable input and button while loading
@@ -1995,6 +2055,9 @@ async function addCity() {
         // Clear leave date
         leaveDate.value = '';
         
+        // Reset editing state (we just added a new city)
+        editingCityIndex = null;
+        
         // Update date picker constraints
         updateDatePickerState();
     } catch (error) {
@@ -2003,7 +2066,8 @@ async function addCity() {
         // Re-enable input and button
         cityInput.disabled = false;
         addCityBtn.disabled = false;
-        addCityBtn.textContent = 'Add';
+        // Reset button text based on editing state
+        addCityBtn.textContent = editingCityIndex !== null ? 'DONE' : 'Add';
         cityInput.classList.remove('loading');
         cityInput.focus();
     }
@@ -2014,6 +2078,10 @@ function clearAll() {
     if (cities.length === 0) {
         return;
     }
+    
+    // Reset editing state
+    editingCityIndex = null;
+    addCityBtn.textContent = 'Add';
     
     // Remove all markers
     markers.forEach(marker => map.removeLayer(marker));
@@ -2524,6 +2592,22 @@ document.getElementById('testJapanBtn').addEventListener('click', addTestJapanCi
 cityInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         addCity();
+    }
+});
+
+// Reset editing state if user manually changes the city input (not from clicking a list item)
+cityInput.addEventListener('input', () => {
+    // Only reset if we're in editing mode and the user is typing something different
+    if (editingCityIndex !== null) {
+        const editingCity = cities[editingCityIndex];
+        const currentInput = cityInput.value.trim().toLowerCase();
+        const editingCityName = editingCity ? editingCity.name.toLowerCase() : '';
+        
+        // If the input doesn't match the editing city name, reset editing state
+        if (currentInput !== editingCityName) {
+            editingCityIndex = null;
+            addCityBtn.textContent = 'Add';
+        }
     }
 });
 
