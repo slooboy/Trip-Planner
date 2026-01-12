@@ -496,14 +496,14 @@ function createCurvedArrow(from, to, existingCurves = [], alternateDirection = n
             if (!defs.querySelector('#taper-marker')) {
                 const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
                 marker.setAttribute('id', 'taper-marker');
-                marker.setAttribute('markerWidth', '10');
-                marker.setAttribute('markerHeight', '10');
-                marker.setAttribute('refX', '10');
-                marker.setAttribute('refY', '5');
+                marker.setAttribute('markerWidth', '6.66');
+                marker.setAttribute('markerHeight', '6.66');
+                marker.setAttribute('refX', '6.66');
+                marker.setAttribute('refY', '3.33');
                 marker.setAttribute('orient', 'auto');
                 marker.setAttribute('markerUnits', 'strokeWidth');
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', 'M 0,0 L 10,5 L 0,10 Z');
+                path.setAttribute('d', 'M 0,0 L 6.66,3.33 L 0,6.66 Z');
                 path.setAttribute('fill', '#667eea');
                 path.setAttribute('opacity', '0.9');
                 marker.appendChild(path);

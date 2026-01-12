@@ -278,9 +278,9 @@ button {
 }
 
 #citiesList li .remove-btn {
-    background: #000;
+    background: transparent;
     color: #e74c3c;
-    border: none;
+    border: 1px solid #000;
     border-radius: 4px;
     width: 24px;
     height: 24px;
@@ -296,7 +296,7 @@ button {
 }
 
 #citiesList li .remove-btn:hover {
-    background: #333;
+    background: rgba(0, 0, 0, 0.05);
     transform: scale(1.1);
 }
 
